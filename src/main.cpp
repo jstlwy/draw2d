@@ -2,15 +2,21 @@
 #include <iostream>
 #include <chrono>
 #include <functional>
+#include <vector>
 #include <SDL.h>
 #include "line.h"
 #include "circle.h"
+#include "fill.h"
 #include "svg.h"
 
-constexpr int SCREEN_WIDTH = 1920;
-constexpr int SCREEN_HEIGHT = 1080;
+constexpr unsigned int SCREEN_WIDTH = 1920;
+constexpr unsigned int SCREEN_HEIGHT = 1080;
+constexpr unsigned int X_MID_SCREEN = SCREEN_WIDTH / 2;
+constexpr unsigned int Y_MID_SCREEN = SCREEN_HEIGHT / 2;
+constexpr unsigned int NUM_PIXELS = SCREEN_WIDTH * SCREEN_HEIGHT;
+const unsigned int TEXTURE_PITCH = SCREEN_WIDTH * sizeof(std::uint32_t);
 
-void reset_renderer(SDL_Renderer* renderer, const SDL_Color& c);
+void render_texture(SDL_Renderer* renderer, SDL_Texture* texture, const std::vector<std::uint32_t>& pixels);
 bool wait_for_input();
 
 int main()
@@ -38,16 +44,33 @@ int main()
 	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
 	if (renderer == nullptr)
 	{
-		std::cerr << "Renderer error: " << SDL_GetError() << std::endl;
+		std::cerr << "Error when creating renderer: " << SDL_GetError() << std::endl;
 		return EXIT_FAILURE;
 	}
 
-	SDL_Color red   = {255,   0,   0,   0};
-	SDL_Color green = {  0, 255,   0,   0};
-	SDL_Color blue  = {  0,   0, 255,   0};
-	SDL_Color black = {  0,   0,   0,   0};
+	SDL_Texture* texture = SDL_CreateTexture(
+		renderer,
+        SDL_PIXELFORMAT_ARGB8888,
+		SDL_TEXTUREACCESS_STATIC,
+		SCREEN_WIDTH,
+		SCREEN_HEIGHT
+	);
+	if (texture == nullptr)
+	{
+		std::cerr << "Error when creating texture: " << SDL_GetError() << std::endl;
+		return EXIT_FAILURE;
+	}
 
-	const std::array<std::function<void(SDL_Renderer*, SDL_Point, SDL_Point)>, 3> drawing_funcs = {
+	const std::uint32_t red   = 0xFFFF0000;
+	const std::uint32_t green = 0xFF00FF00;
+	const std::uint32_t blue  = 0xFF0000FF;
+	const std::uint32_t black = 0xFF000000;
+	const std::uint32_t blank = 0x00FFFFFF;
+
+	std::vector<std::uint32_t> pixels(NUM_PIXELS);
+
+	const std::array<std::function<void(std::vector<std::uint32_t>&, const std::uint32_t,
+		const unsigned int, const int, const int, const int, const int)>, 3> drawing_funcs = {
 		&draw_line_dda,
 		&draw_line_bresenham,
 		&draw_line_zingl
@@ -57,27 +80,25 @@ int main()
 		"Bresenham",
 		"Zingl"
 	};
-	const std::array<SDL_Color, 3> line_colors = {{
+	const std::array<std::uint32_t, 3> line_colors = {{
 		red,
 		green,
 		blue
 	}};
-	
-	const int screen_x_mid = SCREEN_WIDTH / 2;
-	const int screen_y_mid = SCREEN_HEIGHT / 2;
-	const std::array<SDL_Point, 6> start_points = {{
+
+	const std::array<SDL_Point, 6> line_pas = {{
 		{100, SCREEN_HEIGHT - 1},
 		{100, SCREEN_HEIGHT - 1},
-		{0, screen_y_mid},
-		{0, screen_y_mid},
+		{0, Y_MID_SCREEN},
+		{0, Y_MID_SCREEN},
 		{100, 0},
 		{100, 0}
 	}};
-	const std::array<SDL_Point, 6> end_points = {{
+	const std::array<SDL_Point, 6> line_pbs = {{
 		{100, 0},
 		{150, 0},
-		{SCREEN_WIDTH - 1, screen_y_mid - 100},
-		{SCREEN_WIDTH - 1, screen_y_mid + 100},
+		{SCREEN_WIDTH - 1, Y_MID_SCREEN - 100},
+		{SCREEN_WIDTH - 1, Y_MID_SCREEN + 100},
 		{150, SCREEN_HEIGHT - 1},
 		{100, SCREEN_HEIGHT - 1}
 	}};
@@ -86,56 +107,59 @@ int main()
 	bool should_exit_early = false;
 	for (std::size_t i = 0; i < drawing_funcs.size() && !should_exit_early; i++)
 	{
-		auto func = drawing_funcs.at(i);
 		const std::string func_name = func_names.at(i);
-		const SDL_Color line_color = line_colors.at(i);
 		std::cout << i + 1 << ". " << func_name << std::endl;
+
+		auto func = drawing_funcs.at(i);
+		const std::uint32_t line_color = line_colors.at(i);
 		
-		for (std::size_t j = 0; j < start_points.size(); j++)
+		for (std::size_t j = 0; j < line_pas.size(); j++)
 		{
-			const SDL_Point start_point = start_points.at(j);
-			const SDL_Point end_point = end_points.at(j);
-			
-			reset_renderer(renderer, line_color);
+			std::fill(pixels.begin(), pixels.end(), blank);
+			const SDL_Point pa = line_pas.at(j);
+			const SDL_Point pb = line_pbs.at(j);
 			
 			const auto time_start = std::chrono::system_clock::now();
-			func(renderer, start_point, end_point);
+			func(pixels, SCREEN_WIDTH, line_color, pa.x, pa.y, pb.x, pb.y);
 			const auto time_end = std::chrono::system_clock::now();
 			const auto us_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_start);
-			
-			SDL_RenderPresent(renderer);
-			std::cout << "(" << start_point.x << ", " << start_point.y << ") to ";
-			std::cout << "(" << end_point.x << ", " << end_point.y << "): ";
+			std::cout << "(" << pa.x << ", " << pa.y << ") to ";
+			std::cout << "(" << pb.x << ", " << pb.y << "): ";
 			std::cout << us_elapsed.count() << " us" << std::endl;
 			
+			render_texture(renderer, texture, pixels);
 			should_exit_early = wait_for_input();
 		}
 	}
 	
 	// CIRCLE DRAWING TEST
-	reset_renderer(renderer, black);
-	SDL_Point circle_center = {screen_x_mid, screen_y_mid};
+	std::fill(pixels.begin(), pixels.end(), blank);
+	const SDL_Point circle_center = {X_MID_SCREEN, Y_MID_SCREEN};
 	int radius = SCREEN_HEIGHT / 4;
-	draw_circle_midpoint(renderer, circle_center, radius);
-	SDL_RenderPresent(renderer);
-	should_exit_early = wait_for_input();
-	
-	// SVG DRAWING TEST
-	reset_renderer(renderer, black);
-	draw_svg(renderer, "19976.svg");
-	SDL_RenderPresent(renderer);
+	draw_circle_midpoint(pixels, SCREEN_WIDTH, black, circle_center.x, circle_center.y, radius);
+	flood_fill(pixels, SCREEN_WIDTH, SCREEN_HEIGHT, black, circle_center.x, circle_center.y);
+	render_texture(renderer, texture, pixels);
 	should_exit_early = wait_for_input();
 
+	// SVG DRAWING TEST
+	std::fill(pixels.begin(), pixels.end(), blank);
+	draw_svg(pixels, SCREEN_WIDTH, black, "19976.svg");
+	render_texture(renderer, texture, pixels);
+	should_exit_early = wait_for_input();
+
+	SDL_DestroyTexture(texture);
+	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return EXIT_SUCCESS;
 }
 
-void reset_renderer(SDL_Renderer* renderer, const SDL_Color& c)
+void render_texture(SDL_Renderer* renderer, SDL_Texture* texture, const std::vector<std::uint32_t>& pixels)
 {
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_RenderClear(renderer);
-	SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+	SDL_UpdateTexture(texture, nullptr, &pixels[0], TEXTURE_PITCH);
+	SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+	SDL_RenderPresent(renderer);
 }
 
 bool wait_for_input()

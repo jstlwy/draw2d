@@ -22,7 +22,8 @@ std::vector<int> get_path_coords(const std::string& coords_str)
 	return coords;
 }
 
-void draw_path(SDL_Renderer* r, const std::string& path)
+void draw_path(std::vector<std::uint32_t>& pixels, const unsigned int rowlen,
+    const std::uint32_t color, const std::string& path)
 {
 	int sx = 0;
 	int sy = 0;
@@ -41,7 +42,7 @@ void draw_path(SDL_Renderer* r, const std::string& path)
         
         if (type == 'Z')
         {
-			draw_line_bresenham(r, {cx, cy}, {sx, sy});
+			draw_line_bresenham(pixels, rowlen, color, cx, cy, sx, sy);
             n++;
 			continue;
 		}
@@ -60,12 +61,12 @@ void draw_path(SDL_Renderer* r, const std::string& path)
             }
             break;
         case 'C':
-            draw_bezier_cubic(r, cx, cy, coords.at(0), coords.at(1), coords.at(2), coords.at(3), coords.at(4), coords.at(5));
+            draw_bezier_cubic(pixels, rowlen, color, cx, cy, coords.at(0), coords.at(1), coords.at(2), coords.at(3), coords.at(4), coords.at(5));
             cx = coords.at(4);
             cy = coords.at(5);
             break;
         case 'Q':
-            draw_bezier_quad(r, cx, cy, coords.at(0), coords.at(1), coords.at(2), coords.at(3));
+            draw_bezier_quad(pixels, rowlen, color, cx, cy, coords.at(0), coords.at(1), coords.at(2), coords.at(3));
             cx = coords.at(2);
             cy = coords.at(3);
             break;
@@ -103,7 +104,8 @@ std::vector<std::string> get_paths_from_svg(const std::string& file_path)
     return paths;
 }
 
-void draw_svg(SDL_Renderer* r, const std::string& file_path)
+void draw_svg(std::vector<std::uint32_t>& pixels, const unsigned int rowlen,
+    const std::uint32_t color, const std::string& file_path)
 {
     std::vector<std::string> paths = get_paths_from_svg(file_path);
     if (paths.empty())
@@ -111,6 +113,6 @@ void draw_svg(SDL_Renderer* r, const std::string& file_path)
     
     for (const std::string& path : paths)
     {
-        draw_path(r, path);
+        draw_path(pixels, rowlen, color, path);
     }
 }

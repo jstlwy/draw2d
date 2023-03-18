@@ -4,7 +4,9 @@
 #include <cassert>
 #include <cmath>
 
-void draw_bezier_quad_seg(SDL_Renderer* renderer, int x0, int y0, int x1, int y1, int x2, int y2)
+void draw_bezier_quad_seg(std::vector<std::uint32_t>& pixels,
+    const unsigned int rowlen, const std::uint32_t color,
+    int x0, int y0, int x1, int y1, int x2, int y2)
 {
     int sx = x2 - x1;
     int sy = y2 - y1;
@@ -58,7 +60,7 @@ void draw_bezier_quad_seg(SDL_Renderer* renderer, int x0, int y0, int x1, int y1
         
         do
         {
-            SDL_RenderDrawPoint(renderer, x0, y0);
+            pixels.at((y0 * rowlen) + x0) = color;
             if (x0 == x2 && y0 == y2) // Last pixel; curve finished
                 return;
             const double two_err = 2 * err;
@@ -82,11 +84,13 @@ void draw_bezier_quad_seg(SDL_Renderer* renderer, int x0, int y0, int x1, int y1
     }
 
     // Plot remaining part to end
-    draw_line_bresenham(renderer, {x0, y0}, {x2, y2});
+    draw_line_bresenham(pixels, rowlen, color, x0, y0, x2, y2);
 }
 
 
-void draw_bezier_quad(SDL_Renderer* renderer, int x0, int y0, int x1, int y1, int x2, int y2)
+void draw_bezier_quad(std::vector<std::uint32_t>& pixels,
+    const unsigned int rowlen, const std::uint32_t color,
+    int x0, int y0, int x1, int y1, int x2, int y2)
 {
     int x = x0 - x1;
     int y = y0 - y1;
@@ -113,7 +117,7 @@ void draw_bezier_quad(SDL_Renderer* renderer, int x0, int y0, int x1, int y1, in
         y = std::floor(r + 0.5);
         // Intersect P3 | P0 P1
         r = (((y1 - y0) * (t - x0)) / (x1 - x0)) + y0;
-        draw_bezier_quad_seg(renderer, x0, y0, x, std::floor(r + 0.5), x, y);
+        draw_bezier_quad_seg(pixels, rowlen, color, x0, y0, x, std::floor(r + 0.5), x, y);
         // Intersect P4 | P1 P2
         r = (((y1 - y2) * (t - x2)) / (x1 - x2)) + y2;
         // P0 = P4, P1 = P8
@@ -135,7 +139,7 @@ void draw_bezier_quad(SDL_Renderer* renderer, int x0, int y0, int x1, int y1, in
         y = std::floor(t + 0.5);
         // Intersect P6 | P0 P1
         r = (((x1 - x0) * (t - y0)) / (y1 - y0)) + x0;
-        draw_bezier_quad_seg(renderer, x0, y0, std::floor(r + 0.5), y, x, y);
+        draw_bezier_quad_seg(pixels, rowlen, color, x0, y0, std::floor(r + 0.5), y, x, y);
         // Intersect P7 | P1 P2
         r = (((x1 - x2) * (t - y2)) / (y1 - y2)) + x2;
         // P0 = P6, P1 = P7
@@ -146,11 +150,13 @@ void draw_bezier_quad(SDL_Renderer* renderer, int x0, int y0, int x1, int y1, in
     }
 
     // Remaining part
-    draw_bezier_quad_seg(renderer, x0, y0, x1, y1, x2, y2);
+    draw_bezier_quad_seg(pixels, rowlen, color, x0, y0, x1, y1, x2, y2);
 }
 
 
-void draw_bezier_cubic_seg(SDL_Renderer* renderer, int x0, int y0, float x1, float y1, float x2, float y2, int x3, int y3)
+void draw_bezier_cubic_seg(std::vector<std::uint32_t>& pixels,
+    const unsigned int rowlen, const std::uint32_t color,
+    int x0, int y0, float x1, float y1, float x2, float y2, int x3, int y3)
 {
     // Step direction
     int sx = x0 < x3 ? 1 : -1;
@@ -174,7 +180,7 @@ void draw_bezier_cubic_seg(SDL_Renderer* renderer, int x0, int y0, float x1, flo
         // New midpoint
         sx = std::floor(((3 * x1) - x0 + 1) / 2);
         sy = std::floor(((3 * y1) - y0 + 1) / 2);
-        draw_bezier_quad_seg(renderer, x0, y0, sx, sy, x3, y3);
+        draw_bezier_quad_seg(pixels, rowlen, color, x0, y0, sx, sy, x3, y3);
         return;
     }
 
@@ -240,7 +246,7 @@ void draw_bezier_cubic_seg(SDL_Renderer* renderer, int x0, int y0, float x1, flo
         while (x0 != x3 && y0 != y3)
         {
             bool should_exit_for_loop = false;
-            SDL_RenderDrawPoint(renderer, x0, y0);
+            pixels.at((y0 * rowlen) + x0) = color;
             do // Move sub-steps of one pixel
             {
                 // Confusing values
@@ -307,13 +313,14 @@ void draw_bezier_cubic_seg(SDL_Renderer* renderer, int x0, int y0, float x1, flo
     while (leg--); // Try other end
 
     // Remaining part in case of cusp or crunode
-    draw_line_bresenham(renderer, {x0, y0}, {x3, y3});
+    draw_line_bresenham(pixels, rowlen, color, x0, y0, x3, y3);
 }
 
 
-void draw_bezier_cubic(SDL_Renderer* renderer, int x0, int y0, float x1, float y1, float x2, float y2, int x3, int y3)
+void draw_bezier_cubic(std::vector<std::uint32_t>& pixels,
+    const unsigned int rowlen, const std::uint32_t color,
+    int x0, int y0, float x1, float y1, float x2, float y2, int x3, int y3)
 {
-    
     long xc = x0 + x1 - x2 - x3;
     long xa = xc - (4 * (x1 - x2));
     long xb = x0 - x1 - x2 + x3;
@@ -410,7 +417,7 @@ void draw_bezier_cubic(SDL_Renderer* renderer, int x0, int y0, float x1, float y
             fy2 *= fy0;
         }
         if (x0 != x3 || y0 != y3) // Segment t1 - t2
-            draw_bezier_cubic_seg(renderer, x0, y0, x0 + fx1, y0 + fy1, x0 + fx2, y0 + fy2, x3, y3);
+            draw_bezier_cubic_seg(pixels, rowlen, color, x0, y0, x0 + fx1, y0 + fy1, x0 + fx2, y0 + fy2, x3, y3);
         x0 = x3;
         y0 = y3;
         fx0 = fx3;

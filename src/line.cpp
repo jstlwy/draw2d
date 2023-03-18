@@ -1,31 +1,32 @@
 #include "line.h"
 #include <cmath>
 
-void draw_line_zingl(SDL_Renderer* r, const SDL_Point a, const SDL_Point b)
+void draw_line_zingl(std::vector<std::uint32_t>& pixels, const unsigned int rowlen, 
+	const std::uint32_t color, const int ax, const int ay, const int bx, const int by)
 {
-	const int dx = std::abs(b.x - a.x);
-	const int sx = a.x < b.x ? 1 : -1;
-	const int dy = -std::abs(b.y - a.y);
-	const int sy = a.y < b.y ? 1 : - 1;
+	const int dx = std::abs(bx - ax);
+	const int sx = ax < bx ? 1 : -1;
+	const int dy = -std::abs(by - ay);
+	const int sy = ay < by ? 1 : - 1;
 	
-	int x = a.x;
-	int y = a.y;
+	int x = ax;
+	int y = ay;
 	int err = dx + dy;
 	
 	while (true)
 	{
-		SDL_RenderDrawPoint(r, x, y);
+		pixels.at((y * rowlen) + x) = color;
 		const int e2 = 2 * err;
 		if (e2 >= dy)
 		{
-			if (x == b.x)
+			if (x == bx)
 				break;
 			err += dy;
 			x += sx;
 		}
 		if (e2 <= dx)
 		{
-			if (y == b.y)
+			if (y == by)
 				break;
 			err += dx;
 			y += sy;
@@ -34,10 +35,11 @@ void draw_line_zingl(SDL_Renderer* r, const SDL_Point a, const SDL_Point b)
 }
 
 
-void draw_line_bresenham(SDL_Renderer* r, const SDL_Point a, const SDL_Point b)
+void draw_line_bresenham(std::vector<std::uint32_t>& pixels, const unsigned int rowlen,
+	const std::uint32_t color, const int ax, const int ay, const int bx, const int by)
 {
-	const int dx = std::abs(b.x - a.x);
-	const int dy = std::abs(b.y - a.y);
+	const int dx = std::abs(bx - ax);
+	const int dy = std::abs(by - ay);
 	int x;
 	int y;
 	
@@ -45,20 +47,20 @@ void draw_line_bresenham(SDL_Renderer* r, const SDL_Point a, const SDL_Point b)
 	{
 		int sy = 1;
 		int x_end;
-		if (a.x > b.x)
+		if (ax > bx)
 		{
-			x = b.x;
-			x_end = a.x;
-			y = b.y;
-			if (y > a.y)
+			x = bx;
+			x_end = ax;
+			y = by;
+			if (y > ay)
 				sy = -1;
 		}
 		else
 		{
-			x = a.x;
-			x_end = b.x;
-			y = a.y;
-			if (y > b.y)
+			x = ax;
+			x_end = bx;
+			y = ay;
+			if (y > by)
 				sy = -1;
 		}
 
@@ -68,7 +70,7 @@ void draw_line_bresenham(SDL_Renderer* r, const SDL_Point a, const SDL_Point b)
 		
 		while (x <= x_end)
 		{
-			SDL_RenderDrawPoint(r, x, y);
+			pixels.at((y * rowlen) + x) = color;
 			x++;
 			if (p < 0)
 			{
@@ -85,21 +87,21 @@ void draw_line_bresenham(SDL_Renderer* r, const SDL_Point a, const SDL_Point b)
 	{
 		int sx = 1;
 		int y_end;
-		if (a.y > b.y)
+		if (ay > by)
 		{
-			x = b.x;
-			if (x > a.x)
+			x = bx;
+			if (x > ax)
 				sx = -1;
-			y = b.y;
-			y_end = a.y;
+			y = by;
+			y_end = ay;
 		}
 		else
 		{
-			x = a.x;
-			if (x > b.x)
+			x = ax;
+			if (x > bx)
 				sx = -1;
-			y = a.y;
-			y_end = b.y;
+			y = ay;
+			y_end = by;
 		}
 
 		const int two_dx = 2 * dx;
@@ -108,7 +110,7 @@ void draw_line_bresenham(SDL_Renderer* r, const SDL_Point a, const SDL_Point b)
 		
 		while (y <= y_end)
 		{
-			SDL_RenderDrawPoint(r, x, y);
+			pixels.at((y * rowlen) + x) = color;
 			y++;
 			if (p < 0)
 			{
@@ -124,25 +126,26 @@ void draw_line_bresenham(SDL_Renderer* r, const SDL_Point a, const SDL_Point b)
 }
 
 
-void draw_line_dda(SDL_Renderer* r, const SDL_Point a, const SDL_Point b)
+void draw_line_dda(std::vector<std::uint32_t>& pixels, const unsigned int rowlen,
+	const std::uint32_t color, const int ax, const int ay, const int bx, const int by)
 {
-	const int dx = b.x - a.x;
-	const int dy = b.y - a.y;
+	const int dx = bx - ax;
+	const int dy = by - ay;
 
 	const int abs_dx = std::abs(dx);
 	const int abs_dy = std::abs(dy);
 	const int steps = abs_dx > abs_dy ? abs_dx : abs_dy;
 
-	double x = static_cast<double>(a.x);
-	double y = static_cast<double>(a.y);
+	double x = static_cast<double>(ax);
+	double y = static_cast<double>(ay);
 	const double x_incr = dx / static_cast<double>(steps);
 	const double y_incr = dy / static_cast<double>(steps);
 
-	SDL_RenderDrawPoint(r, std::round(x), std::round(y));
+	pixels.at((std::round(y) * rowlen) + std::round(x)) = color;
 	for (int k = 0; k < steps; k++)
 	{
 		x += x_incr;
 		y += y_incr;
-		SDL_RenderDrawPoint(r, std::round(x), std::round(y));
+		pixels.at((std::round(y) * rowlen) + std::round(x)) = color;
 	}
 }
