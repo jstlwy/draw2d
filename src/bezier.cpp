@@ -13,11 +13,6 @@ void draw_bezier_quad_seg(SDL_Renderer* renderer, int x0, int y0, int x1, int y1
     long yy = y0 - y1;
     // Sign of gradient must not change
     assert(xx * sx <= 0 && yy * sy <= 0);
-
-    long xy;
-    double dx;
-    double dy;
-    double err;
     // Curvature
     double cur = (xx * sy) - (yy * sx);
     
@@ -43,7 +38,7 @@ void draw_bezier_quad_seg(SDL_Renderer* renderer, int x0, int y0, int x1, int y1
         sy = y0 < y2 ? 1 : -1;
         yy *= sy;
         // Differences 2nd degree
-        xy = 2 * xx * yy;
+        long xy = 2 * xx * yy;
         xx *= xx;
         yy *= yy;
 
@@ -55,11 +50,11 @@ void draw_bezier_quad_seg(SDL_Renderer* renderer, int x0, int y0, int x1, int y1
             cur = -cur;
         }
 
-        dx = (4.0 * sy * cur * (x1 - x0)) + xx - xy;
-        dy = (4.0 * sx * cur * (y0 - y1)) + yy - xy;
+        double dx = (4.0 * sy * cur * (x1 - x0)) + xx - xy;
+        double dy = (4.0 * sx * cur * (y0 - y1)) + yy - xy;
         xx += xx;
         yy += yy;
-        err = dx + dy + xy;
+        double err = dx + dy + xy;
         
         do
         {
@@ -96,7 +91,6 @@ void draw_bezier_quad(SDL_Renderer* renderer, int x0, int y0, int x1, int y1, in
     int x = x0 - x1;
     int y = y0 - y1;
     double t = x0 - (2 * x1) + x2;
-    double r;
 
     if (static_cast<long>(x) * (x2 - x1) > 0) // horizontal cut at P4?
     {
@@ -112,7 +106,7 @@ void draw_bezier_quad(SDL_Renderer* renderer, int x0, int y0, int x1, int y1, in
         }
         t = (x0 - x1) / t;
         // By (t = P4)
-        r = ((1 - t) * (((1 - t) * y0) + (2.0 * t * y1))) + (t * t * y2);
+        double r = ((1 - t) * (((1 - t) * y0) + (2.0 * t * y1))) + (t * t * y2);
         // Gradient dP4 / dx = 0
         t = (((x0 * x2) - (x1 * x1)) * t) / (x0 - x1);
         x = std::floor(t + 0.5);
@@ -134,7 +128,7 @@ void draw_bezier_quad(SDL_Renderer* renderer, int x0, int y0, int x1, int y1, in
         t = y0 - (2 * y1) + y2;
         t = (y0 - y1) / t;
         // Bx(t = P6)
-        r = ((1 - t) * (((1 - t) * x0) + (2.0 * t * x1))) + (t * t * x2);
+        double r = ((1 - t) * (((1 - t) * x0) + (2.0 * t * x1))) + (t * t * x2);
         // Gradient dP6 / dy = 0
         t = (((y0 * y2) - (y1 * y1)) * t) / (y0 - y1);
         x = std::floor(r + 0.5);
@@ -158,11 +152,6 @@ void draw_bezier_quad(SDL_Renderer* renderer, int x0, int y0, int x1, int y1, in
 
 void draw_bezier_cubic_seg(SDL_Renderer* renderer, int x0, int y0, float x1, float y1, float x2, float y2, int x3, int y3)
 {
-    int f;
-    int fx;
-    int fy;
-    int leg = 1;
-
     // Step direction
     int sx = x0 < x3 ? 1 : -1;
     int sy = y0 < y3 ? 1 : -1;
@@ -173,18 +162,6 @@ void draw_bezier_cubic_seg(SDL_Renderer* renderer, int x0, int y0, float x1, flo
     float yc = -std::fabs(y0 + y1 - y2 -y3);
     float ya = yc - (4 * sy * (y1 - y2));
     float yb = sy * (y0 - y1 - y2 + y3);
-    
-    double ab;
-    double ac;
-    double bc;
-    double cb;
-    double xx;
-    double xy;
-    double yy;
-    double dx;
-    double dy;
-    double ex;
-    double* pxy;
     double EP = 0.01;
 
     // Check for curve restraints:
@@ -204,15 +181,16 @@ void draw_bezier_cubic_seg(SDL_Renderer* renderer, int x0, int y0, float x1, flo
     // Line lengths
     x1 = ((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)) + 1;
     x2 = ((x2 - x3) * (x2 - x3)) + ((y2 - y3) * (y2 - y3)) + 1;
+    int leg = 1;
     do // loop over both ends
     {
-        ab = (xa * yb) - (xb * ya);
-        ac = (xa * yc) - (xc * ya);
-        bc = (xb * yc) - (xc * yb);
+        double ab = (xa * yb) - (xb * ya);
+        double ac = (xa * yc) - (xc * ya);
+        double bc = (xb * yc) - (xc * yb);
         // P0 part of self-intersection loop?
-        ex = (ab * (ab + ac - (3 * bc))) + (ac * ac);
+        double ex = (ab * (ab + ac - (3 * bc))) + (ac * ac);
         // Calculate resolution
-        f = ex > 0 ? 1 : std::sqrt(1 + (1024/x1));
+        int f = ex > 0 ? 1 : std::sqrt(1 + (1024/x1));
         // Increase resolution
         ab *= f;
         ac *= f;
@@ -220,14 +198,14 @@ void draw_bezier_cubic_seg(SDL_Renderer* renderer, int x0, int y0, float x1, flo
         ex *= f * f;
 
         // Init differences of 1st degree
-        xy = (9 * (ab + ac + bc)) / 8;
-        cb = 8 * (xa - ya);
-        dx = (27 * (8*ab*(yb*yb-ya*yc)+ex*(ya+2*yb+yc)) / 64) - (ya * ya * (xy - ya));
-        dy = (27 * (8*ab*(xb*xb-xa*xc)-ex*(xa+2*xb+xc)) / 64) - (xa * xa * (xy + xa));
+        double xy = (9 * (ab + ac + bc)) / 8;
+        double cb = 8 * (xa - ya);
+        double dx = (27 * (8*ab*(yb*yb-ya*yc)+ex*(ya+2*yb+yc)) / 64) - (ya * ya * (xy - ya));
+        double dy = (27 * (8*ab*(xb*xb-xa*xc)-ex*(xa+2*xb+xc)) / 64) - (xa * xa * (xy + xa));
 
         // Init differences of 2nd degree
-        xx = 3*(3*ab*(3*yb*yb-ya*ya-2*ya*yc)-ya*(3*ac*(ya+yb)+ya*cb))/4;
-        yy = 3*(3*ab*(3*xb*xb-xa*xa-2*xa*xc)-xa*(3*ac*(xa+xb)+xa*cb))/4;
+        double xx = 3*(3*ab*(3*yb*yb-ya*ya-2*ya*yc)-ya*(3*ac*(ya+yb)+ya*cb))/4;
+        double yy = 3*(3*ab*(3*xb*xb-xa*xa-2*xa*xc)-xa*(3*ac*(xa+xb)+xa*cb))/4;
         xy = xa * ya * ((6 * ab) + (6 * ac) - (3 * bc) + cb);
         ac = ya * ya;
         cb = xa * xa;
@@ -256,7 +234,10 @@ void draw_bezier_cubic_seg(SDL_Renderer* renderer, int x0, int y0, float x1, flo
         ex = dx + dy;
         dy += xy; 
 
-        for (pxy = &xy, fx = fy = f; x0 != x3 && y0 != y3; )
+        double* pxy = &xy;
+        double fx = f;
+        double fy = f;
+        while (x0 != x3 && y0 != y3)
         {
             bool should_exit_for_loop = false;
             SDL_RenderDrawPoint(renderer, x0, y0);
@@ -332,8 +313,7 @@ void draw_bezier_cubic_seg(SDL_Renderer* renderer, int x0, int y0, float x1, flo
 
 void draw_bezier_cubic(SDL_Renderer* renderer, int x0, int y0, float x1, float y1, float x2, float y2, int x3, int y3)
 {
-    int n = 0;
-    int i = 0;
+    
     long xc = x0 + x1 - x2 - x3;
     long xa = xc - (4 * (x1 - x2));
     long xb = x0 - x1 - x2 + x3;
@@ -342,17 +322,9 @@ void draw_bezier_cubic(SDL_Renderer* renderer, int x0, int y0, float x1, float y
     long ya = yc - (4 * (y1 - y2));
     long yb = y0 - y1 - y2 + y3;
     long yd = yb + (4 * (y1 + y2));
-    float fx0 = x0;
-    float fx1;
-    float fx2;
-    float fx3;
-    float fy0 = y0;
-    float fy1;
-    float fy2;
-    float fy3;
     double t1 = (xb * xb) - (xa * xc);
-    double t2;
     std::array<double, 5> t;
+    int n = 0;
 
     // Sub-divide curve at gradient sign changes
     if (xa == 0) // Horizontal
@@ -364,7 +336,7 @@ void draw_bezier_cubic(SDL_Renderer* renderer, int x0, int y0, float x1, float y
     else if (t1 > 0.0)
     {
         // Two changes
-        t2 = std::sqrt(t1);
+        double t2 = std::sqrt(t1);
         t1 = (xb - t2) / xa;
         if (std::fabs(t1) < 1.0)
             t.at(n++) = t1;
@@ -382,7 +354,7 @@ void draw_bezier_cubic(SDL_Renderer* renderer, int x0, int y0, float x1, float y
     else if (t1 > 0.0)
     {
         // Two changes
-        t2 = std::sqrt(t1);
+        double t2 = std::sqrt(t1);
         t1 = (yb - t2) / ya;
         if (std::fabs(t1) < 1.0)
             t.at(n++) = t1;
@@ -392,8 +364,7 @@ void draw_bezier_cubic(SDL_Renderer* renderer, int x0, int y0, float x1, float y
     }
 
     // Bubble sort of 4 points
-    //std::sort(t.begin(), t.end() - 1);
-    for (i = 1; i < n; i++)
+    for (std::size_t i = 1; i < n; i++)
     {
         t1 = t.at(i-1);
         if (t1 > t.at(i))
@@ -409,17 +380,19 @@ void draw_bezier_cubic(SDL_Renderer* renderer, int x0, int y0, float x1, float y
     t.at(n) = 1.0;
 
     // Plot each segment separately
-    for (i = 0; i <= n; i++)
+    float fx0 = x0;
+    float fy0 = y0;
+    for (std::size_t i = 0; i <= n; i++)
     {
         // Sub-divide at t[i-1], t[i]
-        t2 = t.at(i);
-        fx1 = (t1*(t1*xb-2*xc)-t2*(t1*(t1*xa-2*xb)+xc)+xd)/8-fx0;
-        fy1 = (t1*(t1*yb-2*yc)-t2*(t1*(t1*ya-2*yb)+yc)+yd)/8-fy0;
-        fx2 = (t2*(t2*xb-2*xc)-t1*(t2*(t2*xa-2*xb)+xc)+xd)/8-fx0;
-        fy2 = (t2*(t2*yb-2*yc)-t1*(t2*(t2*ya-2*yb)+yc)+yd)/8-fy0;
-        fx3 = (t2*(t2*(3*xb-t2*xa)-3*xc)+xd)/8;
+        double t2 = t.at(i);
+        float fx1 = (t1*(t1*xb-2*xc)-t2*(t1*(t1*xa-2*xb)+xc)+xd)/8-fx0;
+        float fy1 = (t1*(t1*yb-2*yc)-t2*(t1*(t1*ya-2*yb)+yc)+yd)/8-fy0;
+        float fx2 = (t2*(t2*xb-2*xc)-t1*(t2*(t2*xa-2*xb)+xc)+xd)/8-fx0;
+        float fy2 = (t2*(t2*yb-2*yc)-t1*(t2*(t2*ya-2*yb)+yc)+yd)/8-fy0;
+        float fx3 = (t2*(t2*(3*xb-t2*xa)-3*xc)+xd)/8;
         fx0 -= fx3;
-        fy3 = (t2*(t2*(3*yb-t2*ya)-3*yc)+yd)/8;
+        float fy3 = (t2*(t2*(3*yb-t2*ya)-3*yc)+yd)/8;
         fy0 -= fy3;
         // Scale bounds to int
         x3 = std::floor(fx3 + 0.5);
