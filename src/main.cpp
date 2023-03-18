@@ -5,10 +5,12 @@
 #include <SDL.h>
 #include "line.h"
 #include "circle.h"
+#include "svg.h"
 
 constexpr int SCREEN_WIDTH = 1920;
 constexpr int SCREEN_HEIGHT = 1080;
 
+void reset_renderer(SDL_Renderer* renderer, const SDL_Color& c);
 bool wait_for_input();
 
 int main()
@@ -80,6 +82,7 @@ int main()
 		{100, SCREEN_HEIGHT - 1}
 	}};
 	
+	// LINE DRAWING TEST
 	bool should_exit_early = false;
 	for (std::size_t i = 0; i < drawing_funcs.size() && !should_exit_early; i++)
 	{
@@ -93,9 +96,7 @@ int main()
 			const SDL_Point start_point = start_points.at(j);
 			const SDL_Point end_point = end_points.at(j);
 			
-			SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-			SDL_RenderClear(renderer);
-			SDL_SetRenderDrawColor(renderer, line_color.r, line_color.g, line_color.b, line_color.a);
+			reset_renderer(renderer, line_color);
 			
 			const auto time_start = std::chrono::system_clock::now();
 			func(renderer, start_point, end_point);
@@ -111,18 +112,30 @@ int main()
 		}
 	}
 	
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	SDL_RenderClear(renderer);
-	SDL_SetRenderDrawColor(renderer, black.r, black.g, black.b, black.a);
+	// CIRCLE DRAWING TEST
+	reset_renderer(renderer, black);
 	SDL_Point circle_center = {screen_x_mid, screen_y_mid};
 	int radius = SCREEN_HEIGHT / 4;
 	draw_circle_midpoint(renderer, circle_center, radius);
 	SDL_RenderPresent(renderer);
 	should_exit_early = wait_for_input();
 	
+	// SVG DRAWING TEST
+	reset_renderer(renderer, black);
+	draw_svg(renderer, "19976.svg");
+	SDL_RenderPresent(renderer);
+	should_exit_early = wait_for_input();
+
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return EXIT_SUCCESS;
+}
+
+void reset_renderer(SDL_Renderer* renderer, const SDL_Color& c)
+{
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	SDL_RenderClear(renderer);
+	SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
 }
 
 bool wait_for_input()
