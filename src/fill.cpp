@@ -26,15 +26,12 @@ std::array<unsigned int, 4> get_bounding_rect(std::vector<uint32_t> pixels,
     return {x_min, y_min, x_max, y_max};
 }
 
-void scanline_fill(std::vector<std::uint32_t>& pixels,
+void scanline_fill_area(std::vector<std::uint32_t>& pixels,
     const unsigned int width, const unsigned int height,
+    const unsigned int x_min, const unsigned int y_min,
+    const unsigned int x_max, const unsigned int y_max,
     const std::uint32_t color)
 {
-    std::array<unsigned int, 4> boundaries = get_bounding_rect(pixels, width, height, color);
-    const unsigned int x_min = boundaries.at(0);
-    const unsigned int y_min = boundaries.at(1);
-    const unsigned int x_max = boundaries.at(2);
-    const unsigned int y_max = boundaries.at(3);
     for (unsigned int y = y_min; y < y_max; y++)
     {
 		const unsigned int row = y * width;
@@ -57,6 +54,27 @@ void scanline_fill(std::vector<std::uint32_t>& pixels,
             pixels.at(i) = color;
         }
     }
+}
+
+void scanline_fill(std::vector<std::uint32_t>& pixels,
+    const unsigned int width, const unsigned int height,
+    const std::uint32_t color)
+{
+    std::array<unsigned int, 4> boundaries = get_bounding_rect(pixels, width, height, color);
+    const unsigned int x_min = boundaries.at(0);
+    const unsigned int y_min = boundaries.at(1);
+    const unsigned int x_max = boundaries.at(2);
+    const unsigned int y_max = boundaries.at(3);
+    scanline_fill_area(
+        pixels,
+        width,
+        height,
+        x_min,
+        y_min,
+        x_max,
+        y_max,
+        color
+    );
 }
 
 void flood_fill(std::vector<std::uint32_t>& pixels,

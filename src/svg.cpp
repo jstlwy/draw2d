@@ -2,6 +2,7 @@
 #include "line.h"
 #include "bezier.h"
 #include "fill.h"
+#include <array>
 #include <fstream>
 #include <regex>
 #include <sstream>
@@ -117,11 +118,21 @@ void draw_svg(std::vector<std::uint32_t>& pixels,
 	{
 		std::vector<std::uint32_t> path_pixels(pixels.size());
 		draw_path(path_pixels, width, color, path);
-		scanline_fill(path_pixels, width, height, color);
-		for (std::size_t i = 0; i < path_pixels.size(); i++)
+		std::array<unsigned int, 4> boundaries = get_bounding_rect(path_pixels, width, height, color);
+		const unsigned int x_min = boundaries.at(0);
+		const unsigned int y_min = boundaries.at(1);
+		const unsigned int x_max = boundaries.at(2);
+		const unsigned int y_max = boundaries.at(3);
+		scanline_fill_area(path_pixels, width, height, x_min, y_min, x_max, y_max, color);
+		for (unsigned int y = y_min; y <= y_max; y++)
 		{
-			if (path_pixels.at(i) == color)
-				pixels.at(i) = color;
+			const unsigned int row = y * width;
+			for (unsigned int x = x_min; x <= x_max; x++)
+			{
+				const unsigned int i = row + x;
+				if (path_pixels.at(i) == color)
+					pixels.at(i) = color;
+			}
 		}
 	}
 }
