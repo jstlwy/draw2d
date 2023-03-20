@@ -14,7 +14,7 @@ constexpr unsigned int SCREEN_HEIGHT = 1080;
 constexpr unsigned int X_MID_SCREEN = SCREEN_WIDTH / 2;
 constexpr unsigned int Y_MID_SCREEN = SCREEN_HEIGHT / 2;
 constexpr unsigned int NUM_PIXELS = SCREEN_WIDTH * SCREEN_HEIGHT;
-const unsigned int TEXTURE_PITCH = SCREEN_WIDTH * sizeof(std::uint32_t);
+constexpr unsigned int TEXTURE_PITCH = SCREEN_WIDTH * sizeof(std::uint32_t);
 
 void render_texture(SDL_Renderer* renderer, SDL_Texture* texture, const std::vector<std::uint32_t>& pixels);
 bool wait_for_input();
@@ -50,7 +50,7 @@ int main()
 
 	SDL_Texture* texture = SDL_CreateTexture(
 		renderer,
-        SDL_PIXELFORMAT_ARGB8888,
+		SDL_PIXELFORMAT_ARGB8888,
 		SDL_TEXTUREACCESS_STATIC,
 		SCREEN_WIDTH,
 		SCREEN_HEIGHT
@@ -86,23 +86,25 @@ int main()
 		blue
 	}};
 
-	const std::array<SDL_Point, 6> line_pas = {{
+	const std::array<SDL_Point, 7> line_pas = {{
 		{100, SCREEN_HEIGHT - 1},
 		{100, SCREEN_HEIGHT - 1},
+		{0, Y_MID_SCREEN},
 		{0, Y_MID_SCREEN},
 		{0, Y_MID_SCREEN},
 		{100, 0},
 		{100, 0}
 	}};
-	const std::array<SDL_Point, 6> line_pbs = {{
+	const std::array<SDL_Point, 7> line_pbs = {{
 		{100, 0},
 		{150, 0},
 		{SCREEN_WIDTH - 1, Y_MID_SCREEN - 100},
+		{SCREEN_WIDTH - 1, Y_MID_SCREEN},
 		{SCREEN_WIDTH - 1, Y_MID_SCREEN + 100},
 		{150, SCREEN_HEIGHT - 1},
 		{100, SCREEN_HEIGHT - 1}
 	}};
-	
+
 	// LINE DRAWING TEST
 	bool should_exit_early = false;
 	for (std::size_t i = 0; i < drawing_funcs.size() && !should_exit_early; i++)
@@ -112,13 +114,13 @@ int main()
 
 		auto func = drawing_funcs.at(i);
 		const std::uint32_t line_color = line_colors.at(i);
-		
+
 		for (std::size_t j = 0; j < line_pas.size(); j++)
 		{
 			std::fill(pixels.begin(), pixels.end(), blank);
 			const SDL_Point pa = line_pas.at(j);
 			const SDL_Point pb = line_pbs.at(j);
-			
+
 			const auto time_start = std::chrono::system_clock::now();
 			func(pixels, SCREEN_WIDTH, line_color, pa.x, pa.y, pb.x, pb.y);
 			const auto time_end = std::chrono::system_clock::now();
@@ -126,12 +128,12 @@ int main()
 			std::cout << "(" << pa.x << ", " << pa.y << ") to ";
 			std::cout << "(" << pb.x << ", " << pb.y << "): ";
 			std::cout << us_elapsed.count() << " us" << std::endl;
-			
+
 			render_texture(renderer, texture, pixels);
 			should_exit_early = wait_for_input();
 		}
 	}
-	
+
 	// CIRCLE DRAWING TEST
 	std::fill(pixels.begin(), pixels.end(), blank);
 	const SDL_Point circle_center = {X_MID_SCREEN, Y_MID_SCREEN};
@@ -143,7 +145,7 @@ int main()
 
 	// SVG DRAWING TEST
 	std::fill(pixels.begin(), pixels.end(), blank);
-	draw_svg(pixels, SCREEN_WIDTH, black, "19976.svg");
+	draw_svg(pixels, SCREEN_WIDTH, SCREEN_HEIGHT, black, "19976.svg");
 	render_texture(renderer, texture, pixels);
 	should_exit_early = wait_for_input();
 
@@ -174,7 +176,6 @@ bool wait_for_input()
 		{
 			should_continue = true;
 			should_exit_early = true;	
-			
 		}
 		else if (event.type == SDL_KEYDOWN)
 		{
