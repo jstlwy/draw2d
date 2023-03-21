@@ -1,7 +1,7 @@
 #include "line.h"
 #include <cmath>
 
-void draw_line_zingl(std::vector<std::uint32_t>& pixels, const unsigned int rowlen, 
+void draw_line_zingl(std::vector<std::uint32_t>& pixels, const unsigned int width, 
 	const std::uint32_t color, const int ax, const int ay, const int bx, const int by)
 {
 	const int dx = std::abs(bx - ax);
@@ -15,7 +15,7 @@ void draw_line_zingl(std::vector<std::uint32_t>& pixels, const unsigned int rowl
 	
 	while (true)
 	{
-		pixels.at((y * rowlen) + x) = color;
+		pixels.at((y * width) + x) = color;
 		const int e2 = 2 * err;
 		if (e2 >= dy)
 		{
@@ -35,32 +35,73 @@ void draw_line_zingl(std::vector<std::uint32_t>& pixels, const unsigned int rowl
 }
 
 
-void draw_line_bresenham(std::vector<std::uint32_t>& pixels, const unsigned int rowlen,
+void draw_line_bresenham(std::vector<std::uint32_t>& pixels, const unsigned int width,
 	const std::uint32_t color, const int ax, const int ay, const int bx, const int by)
 {
 	const int dx = std::abs(bx - ax);
 	const int dy = std::abs(by - ay);
-	int x;
-	int y;
-	
-	if (dx > dy)
+	int x = ax;
+	int y = ay;
+
+	if (dx == 0 && dy == 0)
+	{
+		pixels.at((y * width) + x) = color;
+	}
+	else if (dx == 0)
+	{
+		int y_end;
+		if (ay < by)
+		{
+			y_end = by;
+		}
+		else
+		{
+			y = by;
+			y_end = ay;
+		}
+		int row = y * width;
+		const int row_end = y_end * width;
+		while (row <= row_end)
+		{
+			pixels.at(row + x) = color;
+			row += width;
+		}
+	}
+	else if (dy == 0)
+	{
+		int x_end;
+		if (ax < bx)
+		{
+			x_end = bx;
+		}
+		else
+		{
+			x = bx;
+			x_end = ax;
+		}
+		const int row = y * width;
+		while (x <= x_end)
+		{
+			pixels.at(row + x) = color;
+			x++;
+		}
+	}
+	else if (dx > dy)
 	{
 		int sy = 1;
 		int x_end;
-		if (ax > bx)
+		if (ax < bx)
+		{
+			x_end = bx;
+			if (y > by)
+				sy = -1;
+		}
+		else
 		{
 			x = bx;
 			x_end = ax;
 			y = by;
 			if (y > ay)
-				sy = -1;
-		}
-		else
-		{
-			x = ax;
-			x_end = bx;
-			y = ay;
-			if (y > by)
 				sy = -1;
 		}
 
@@ -70,7 +111,7 @@ void draw_line_bresenham(std::vector<std::uint32_t>& pixels, const unsigned int 
 		
 		while (x <= x_end)
 		{
-			pixels.at((y * rowlen) + x) = color;
+			pixels.at((y * width) + x) = color;
 			x++;
 			if (p < 0)
 			{
@@ -87,21 +128,19 @@ void draw_line_bresenham(std::vector<std::uint32_t>& pixels, const unsigned int 
 	{
 		int sx = 1;
 		int y_end;
-		if (ay > by)
+		if (ay < by)
+		{
+			if (x > bx)
+				sx = -1;
+			y_end = by;
+		}
+		else
 		{
 			x = bx;
 			if (x > ax)
 				sx = -1;
 			y = by;
 			y_end = ay;
-		}
-		else
-		{
-			x = ax;
-			if (x > bx)
-				sx = -1;
-			y = ay;
-			y_end = by;
 		}
 
 		const int two_dx = 2 * dx;
@@ -110,7 +149,7 @@ void draw_line_bresenham(std::vector<std::uint32_t>& pixels, const unsigned int 
 		
 		while (y <= y_end)
 		{
-			pixels.at((y * rowlen) + x) = color;
+			pixels.at((y * width) + x) = color;
 			y++;
 			if (p < 0)
 			{
@@ -126,7 +165,7 @@ void draw_line_bresenham(std::vector<std::uint32_t>& pixels, const unsigned int 
 }
 
 
-void draw_line_dda(std::vector<std::uint32_t>& pixels, const unsigned int rowlen,
+void draw_line_dda(std::vector<std::uint32_t>& pixels, const unsigned int width,
 	const std::uint32_t color, const int ax, const int ay, const int bx, const int by)
 {
 	const int dx = bx - ax;
@@ -141,11 +180,11 @@ void draw_line_dda(std::vector<std::uint32_t>& pixels, const unsigned int rowlen
 	const double x_incr = dx / static_cast<double>(steps);
 	const double y_incr = dy / static_cast<double>(steps);
 
-	pixels.at((std::round(y) * rowlen) + std::round(x)) = color;
+	pixels.at((std::round(y) * width) + std::round(x)) = color;
 	for (int k = 0; k < steps; k++)
 	{
 		x += x_incr;
 		y += y_incr;
-		pixels.at((std::round(y) * rowlen) + std::round(x)) = color;
+		pixels.at((std::round(y) * width) + std::round(x)) = color;
 	}
 }
