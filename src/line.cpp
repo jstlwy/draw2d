@@ -43,11 +43,7 @@ void draw_line_bresenham(std::vector<std::uint32_t>& pixels, const unsigned int 
 	int x = ax;
 	int y = ay;
 
-	if (dx == 0 && dy == 0)
-	{
-		pixels.at((y * width) + x) = color;
-	}
-	else if (dx == 0)
+	if (dx == 0)
 	{
 		int y_end;
 		if (ay < by)
@@ -88,13 +84,14 @@ void draw_line_bresenham(std::vector<std::uint32_t>& pixels, const unsigned int 
 	}
 	else if (dx > dy)
 	{
-		int sy = 1;
+		//int sy = 1;
+		int srow = width;
 		int x_end;
 		if (ax < bx)
 		{
 			x_end = bx;
 			if (y > by)
-				sy = -1;
+				srow = -width;
 		}
 		else
 		{
@@ -102,16 +99,17 @@ void draw_line_bresenham(std::vector<std::uint32_t>& pixels, const unsigned int 
 			x_end = ax;
 			y = by;
 			if (y > ay)
-				sy = -1;
+				srow = -width;
 		}
 
 		const int two_dy = 2 * dy;
 		const int two_diff_dy_dx = 2 * (dy - dx);
 		int p = two_dy - dx;
+		int row = y * width;
 		
 		while (x <= x_end)
 		{
-			pixels.at((y * width) + x) = color;
+			pixels.at(row + x) = color;
 			x++;
 			if (p < 0)
 			{
@@ -119,7 +117,8 @@ void draw_line_bresenham(std::vector<std::uint32_t>& pixels, const unsigned int 
 			}
 			else
 			{
-				y += sy;
+				//y += sy;
+				row += srow;
 				p += two_diff_dy_dx;
 			}
 		}
@@ -146,11 +145,15 @@ void draw_line_bresenham(std::vector<std::uint32_t>& pixels, const unsigned int 
 		const int two_dx = 2 * dx;
 		const int two_diff_dx_dy = 2 * (dx - dy);
 		int p = two_dx - dy;
+		int row = y * width;
+		const int row_end = y_end * width;
 		
-		while (y <= y_end)
+		//while (y <= y_end)
+		while (row <= row_end)
 		{
-			pixels.at((y * width) + x) = color;
-			y++;
+			pixels.at(row + x) = color;
+			//y++;
+			row += width;
 			if (p < 0)
 			{
 				p += two_dx;
