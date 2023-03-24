@@ -3,7 +3,7 @@
 #include <chrono>
 #include <functional>
 #include <vector>
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include "line.h"
 #include "circle.h"
 #include "fill.h"
@@ -131,8 +131,12 @@ int main()
 
 			render_texture(renderer, texture, pixels);
 			should_exit_early = wait_for_input();
+			if (should_exit_early)
+				break;
 		}
 	}
+	if (should_exit_early)
+		return EXIT_SUCCESS;
 
 	// CIRCLE DRAWING TEST
 	std::fill(pixels.begin(), pixels.end(), blank);
@@ -141,13 +145,15 @@ int main()
 	draw_circle_midpoint(pixels, SCREEN_WIDTH, black, circle_center.x, circle_center.y, radius);
 	flood_fill(pixels, SCREEN_WIDTH, SCREEN_HEIGHT, black, circle_center.x, circle_center.y);
 	render_texture(renderer, texture, pixels);
-	should_exit_early = wait_for_input();
+	if (wait_for_input())
+		return EXIT_SUCCESS;
 
 	// SVG DRAWING TEST
 	std::fill(pixels.begin(), pixels.end(), blank);
 	draw_svg(pixels, SCREEN_WIDTH, SCREEN_HEIGHT, black, "19976.svg");
 	render_texture(renderer, texture, pixels);
-	should_exit_early = wait_for_input();
+	if (wait_for_input())
+		return EXIT_SUCCESS;
 
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);

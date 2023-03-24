@@ -1,3 +1,11 @@
+# macOS note:
+# You may need to run the following command:
+# codesign -f -s - SDL2.framework
+#
+# Alternatively, in Security & Privacy > Privacy > Developer Tools,
+# allow Terminal.app to run software locally
+# that does not meet the system's security policy.
+
 CXX := clang++
 sdlf := -framework SDL2
 sdlh := -I /Library/Frameworks/SDL2.framework/Headers
