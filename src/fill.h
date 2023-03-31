@@ -1,10 +1,16 @@
 #ifndef FILL_H
 #define FILL_H
 
-#include <array>
 #include <vector>
 
-std::array<unsigned int, 4> get_bounding_rect(std::vector<uint32_t> pixels,
+struct BoundingRect {
+	unsigned int x_min;
+	unsigned int y_min;
+	unsigned int x_max;
+	unsigned int y_max;
+};
+
+BoundingRect get_bounding_rect(std::vector<uint32_t> pixels,
     const unsigned int width, const unsigned int height, uint32_t border_color);
 void scanline_fill_area(std::vector<std::uint32_t>& pixels,
     const unsigned int width, const unsigned int height,
