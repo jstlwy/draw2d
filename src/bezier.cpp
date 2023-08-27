@@ -184,7 +184,7 @@ void draw_bezier_quad(std::vector<std::uint32_t>& pixels,
 	if (static_cast<long>(x) * (x2 - x1) > 0) // horizontal cut at P4?
 	{
 		if ((static_cast<long>(y) * (y2 - y1) > 0) && // Vertical cut at P6 too?
-				(std::fabs(((y0 - (2 * y1) + y2) / t) * x) > std::abs(y))) // Which first?
+		   (std::fabs(((y0 - (2 * y1) + y2) / t) * x) > std::abs(y))) // Which first?
 		{
 			// Swap points.
 			// Now the horizontal cut at P4 comes first.
@@ -416,7 +416,7 @@ void draw_bezier_cubic(std::vector<std::uint32_t>& pixels,
 	long yd = yb + (4 * (y1 + y2));
 	double t1 = (xb * xb) - (xa * xc);
 	std::array<double, 5> t;
-	int n = 0;
+	std::size_t n = 0;
 
 	// Sub-divide curve at gradient sign changes
 	if (xa == 0) // Horizontal

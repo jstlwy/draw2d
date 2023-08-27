@@ -44,15 +44,11 @@ void draw_circle_midpoint(std::vector<std::uint32_t>& pixels, const unsigned int
 	
 	plot_circle_points(pixels, rowlen, color, cx, cy, x, y);
 	
-	while (x < y)
-	{
+	while (x < y) {
 		x++;
-		if (p < 0)
-		{
+		if (p < 0) {
 			p += (2 * x) + 1;
-		}
-		else
-		{
+		} else {
 			y--;
 			p += (2 * (x - y)) + 1;	
 		}

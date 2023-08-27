@@ -21,8 +21,7 @@ bool wait_for_input();
 
 int main()
 {
-	if (SDL_Init(SDL_INIT_VIDEO) < 0)
-	{
+	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		std::cerr << "SDL_Init error: " << SDL_GetError() << std::endl;
 		return EXIT_FAILURE;
 	}
@@ -35,15 +34,13 @@ int main()
 		SCREEN_HEIGHT,
 		SDL_WINDOW_SHOWN
 	);
-	if (window == nullptr)
-	{
+	if (window == nullptr) {
 		std::cerr << "Window error: " << SDL_GetError() << std::endl;
 		return EXIT_FAILURE;
 	}
 
 	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
-	if (renderer == nullptr)
-	{
+	if (renderer == nullptr) {
 		std::cerr << "Error when creating renderer: " << SDL_GetError() << std::endl;
 		return EXIT_FAILURE;
 	}
@@ -55,8 +52,7 @@ int main()
 		SCREEN_WIDTH,
 		SCREEN_HEIGHT
 	);
-	if (texture == nullptr)
-	{
+	if (texture == nullptr) {
 		std::cerr << "Error when creating texture: " << SDL_GetError() << std::endl;
 		return EXIT_FAILURE;
 	}
@@ -107,16 +103,14 @@ int main()
 
 	// LINE DRAWING TEST
 	bool should_exit_early = false;
-	for (std::size_t i = 0; i < drawing_funcs.size() && !should_exit_early; i++)
-	{
+	for (std::size_t i = 0; i < drawing_funcs.size() && !should_exit_early; i++) {
 		const std::string func_name = func_names.at(i);
 		std::cout << i + 1 << ". " << func_name << std::endl;
 
 		auto func = drawing_funcs.at(i);
 		const std::uint32_t line_color = line_colors.at(i);
 
-		for (std::size_t j = 0; j < line_pas.size(); j++)
-		{
+		for (std::size_t j = 0; j < line_pas.size(); j++) {
 			std::fill(pixels.begin(), pixels.end(), blank);
 			const SDL_Point pa = line_pas.at(j);
 			const SDL_Point pb = line_pbs.at(j);
@@ -175,31 +169,25 @@ bool wait_for_input()
 	bool should_exit_early = false;
 	bool should_continue = false;
 	SDL_Event event;
-	do
-	{
+	do {
 		SDL_PollEvent(&event);
-		if (event.type == SDL_QUIT)
-		{
+		if (event.type == SDL_QUIT) {
 			should_continue = true;
 			should_exit_early = true;	
-		}
-		else if (event.type == SDL_KEYDOWN)
-		{
-			switch (event.key.keysym.sym)
-			{
-				case SDLK_RETURN:
-				case SDLK_SPACE:
-					should_continue = true;
-					break;
-				case SDLK_ESCAPE:
-					should_continue = true;
-					should_exit_early = true;
-					break;
-				default:
-					break;
+		} else if (event.type == SDL_KEYDOWN) {
+			switch (event.key.keysym.sym) {
+			case SDLK_RETURN:
+			case SDLK_SPACE:
+				should_continue = true;
+				break;
+			case SDLK_ESCAPE:
+				should_continue = true;
+				should_exit_early = true;
+				break;
+			default:
+				break;
 			}
 		}
-	}
-	while (!should_continue);
+	} while (!should_continue);
 	return should_exit_early;
 }
