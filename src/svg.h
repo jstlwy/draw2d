@@ -3,13 +3,22 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 
 std::vector<int> get_path_coords(const std::string& coords_str);
-void draw_path(std::vector<std::uint32_t>& pixels, const unsigned int width,
-    const std::uint32_t color, const std::string& path);
+
+void draw_path(
+    std::vector<std::uint32_t>& pixels,
+    const std::uint32_t color,
+    const std::string& path
+);
+
 std::vector<std::string> get_paths_from_svg(const std::string& file_path);
-void draw_svg(std::vector<std::uint32_t>& pixels,
-    const unsigned int width, const unsigned int height,
-    const std::uint32_t color, const std::string& file_path);
+
+void draw_svg(
+    std::vector<std::uint32_t>& pixels,
+    const std::uint32_t color,
+    const std::string& file_path
+);
 
 #endif

@@ -4,6 +4,3 @@
 # Object and dependency files
 *.o
 *.d
-
-# Executable
-draw2d

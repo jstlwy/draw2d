@@ -1,10 +1,11 @@
 # draw2d
 Implementations of 2D drawing algorithms in C++.
 
-**NOTE:**
-For macOS. Requires SDL2.
+## Requirements
+- Linux or macOS
+- [SDL2](https://libsdl.org/)
 
-To run:
+## Usage
 ```
 make
 ./draw2d
