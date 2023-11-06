@@ -19,7 +19,7 @@ Graphics::Graphics()
     }
 
     window = SDL_CreateWindow(
-        "Software Rasterizer",
+        "draw2d",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
         SCREEN_WIDTH,
@@ -53,6 +53,7 @@ Graphics::~Graphics()
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+    was_instantiated = false;
 }
 
 void Graphics::render()
