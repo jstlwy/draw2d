@@ -15,7 +15,7 @@ objdir := ./obj
 src := $(wildcard $(srcdir)/*.cpp)
 hdr := $(wildcard $(srcdir)/*.h)
 obj := $(patsubst $(srcdir)/%.cpp, $(objdir)/%.o, $(src))
-dep := $(addsuffix .d, $(basename $(obj)))
+dep := $(obj:%.o=%.d)
 bin := draw2d
 
 .PHONY: all clean print

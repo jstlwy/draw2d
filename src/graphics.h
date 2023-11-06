@@ -14,6 +14,7 @@ public:
     void render();
 
 private:
+    static bool was_instantiated;
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* texture;

@@ -4,9 +4,16 @@
 #include <exception>
 #include "line.h"
 
+bool Graphics::was_instantiated = false;
+
 Graphics::Graphics()
     : pixels(NUM_PIXELS, blank)
 {
+    if (was_instantiated) {
+        throw std::runtime_error("Only one instance of this class is permitted at a time.");
+    }
+    was_instantiated = true;
+
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         throw std::runtime_error("SDL_Init failed");
     }
